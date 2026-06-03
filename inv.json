@@ -1,0 +1,37 @@
+[
+  {
+    "itemId": "INV-001",
+    "productName": "Wireless Mouse",
+    "location": "Warehouse A",
+    "stockLevel": 76,
+    "status": "In Stock"
+  },
+  {
+    "itemId": "INV-002",
+    "productName": "Monitor",
+    "location": "Warehouse B",
+    "stockLevel": 8,
+    "status": "Low Stock"
+  },
+  {
+    "itemId": "INV-003",
+    "productName": "Mechanical Keyboard",
+    "location": "Warehouse C",
+    "stockLevel": 39,
+    "status": "In Stock"
+  },
+  {
+    "itemId": "INV-004",
+    "productName": "CPU",
+    "location": "Warehouse D",
+    "stockLevel": 30,
+    "status": "Low Stock"
+  },
+  {
+    "itemId": "INV-006",
+    "productName": "headphones",
+    "location": "Warehouse E",
+    "stockLevel": 0,
+    "status": "Out of Stock"
+  }
+]

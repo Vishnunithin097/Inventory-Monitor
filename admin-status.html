@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - Request Status</title>
+    <link rel="stylesheet" href="index.css">
+    <style>
+        .admin-header {
+            background: linear-gradient(135deg, #2563eb, #1e40af);
+            color: white;
+            padding: 30px;
+            border-radius: 15px;
+            margin-bottom: 24px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+        }
+
+        .admin-header h1 {
+            font-size: 38px;
+            color: white;
+        }
+
+        .admin-header p {
+            font-size: 14px;
+            color: rgba(255,255,255,0.8);
+            margin-top: 8px;
+        }
+
+        .status-section {
+            background: #ffffff;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+            margin-bottom: 24px;
+        }
+
+        .status-section h2 {
+            margin-bottom: 20px;
+            color: #1f2937;
+        }
+
+        .status-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+
+        .status-table thead {
+            background: #f3f4f6;
+        }
+
+        .status-table th {
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+            color: #374151;
+            border-bottom: 2px solid #e5e7eb;
+        }
+
+        .status-table th:last-child {
+            min-width: 250px;
+        }
+
+        .status-table td {
+            padding: 12px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .status-table tbody tr:hover {
+            background: #f9fafb;
+        }
+
+        .rejection-note {
+            color: #dc2626;
+            font-size: 12px;
+            line-height: 1.5;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .status-pending {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .status-assigned {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .status-rejected {
+            background: #fee2e2;
+            color: #7f1d1d;
+        }
+
+        .back-btn {
+            background: #6b7280;
+            color: white;
+            border: none;
+            padding: 10px 18px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            margin-bottom: 15px;
+        }
+
+        .back-btn:hover {
+            background: #4b5563;
+        }
+
+        .refresh-btn {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 10px 18px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            margin-bottom: 15px;
+            margin-left: 10px;
+        }
+
+        .refresh-btn:hover {
+            background: #2563eb;
+        }
+
+        .no-requests {
+            text-align: center;
+            padding: 40px;
+            color: #9ca3af;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #9ca3af;
+        }
+
+        .empty-state p {
+            font-size: 16px;
+            margin-bottom: 10px;
+        }
+
+        .logout-btn {
+            float: right;
+            background: #ef4444;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .logout-btn:hover {
+            background: #dc2626;
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard">
+        <header class="admin-header">
+            <button class="logout-btn" onclick="logout()">Logout</button>
+            <h1>Request Status</h1>
+            <p>Track requests sent to staff for approval</p>
+        </header>
+
+        <section class="status-section">
+            <div>
+                <button class="back-btn" onclick="goBack()">← Back to Inventory</button>
+                <button class="refresh-btn" onclick="viewRequestStatus()">Refresh Status</button>
+            </div>
+
+            <h2>Sent Requests</h2>
+
+            <div id="status-container">
+                <table class="status-table" id="status-table" style="display: none;">
+                    <thead>
+                        <tr>
+                            <th>Employee ID</th>
+                            <th>Employee Name</th>
+                            <th>Requested Product</th>
+                            <th>Reason</th>
+                            <th>Date Sent</th>
+                            <th>Status</th>
+                            <th>Notes</th>
+                        </tr>
+                    </thead>
+                    <tbody id="status-body">
+                    </tbody>
+                </table>
+                <div class="empty-state" id="empty-state">
+                    <p>No requests sent yet.</p>
+                    <p>Requests you send to staff will appear here.</p>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        // Check if admin is logged in
+        if (localStorage.getItem("loggedIn") !== "true" || localStorage.getItem("role") !== "admin") {
+            window.location.href = "login.html";
+        }
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', () => {
+            viewRequestStatus();
+            
+            // Auto-refresh every 5 seconds
+            setInterval(viewRequestStatus, 5000);
+        });
+
+        // View request status
+        function viewRequestStatus() {
+            try {
+                const storedRequests = localStorage.getItem('productRequests');
+                const requests = storedRequests ? JSON.parse(storedRequests) : [];
+
+                displayRequestStatus(requests);
+            } catch (error) {
+                console.error("Error loading requests:", error);
+            }
+        }
+
+        // Display request status in table
+        function displayRequestStatus(requests) {
+            const table = document.getElementById('status-table');
+            const tbody = document.getElementById('status-body');
+            const emptyState = document.getElementById('empty-state');
+
+            if (!requests || requests.length === 0) {
+                table.style.display = 'none';
+                emptyState.style.display = 'block';
+                return;
+            }
+
+            table.style.display = 'table';
+            emptyState.style.display = 'none';
+            tbody.innerHTML = '';
+
+            requests.forEach(request => {
+                const row = document.createElement('tr');
+                
+                let statusClass = 'status-pending';
+                let displayStatus = request.status;
+                let notes = '';
+                
+                // Handle both single and multiple products
+                let productDisplay = request.product || (request.products ? request.products.join(', ') : '');
+                
+                if (request.status === 'Approved') {
+                    statusClass = 'status-assigned';
+                    displayStatus = 'Assigned';
+                }
+                if (request.status === 'Rejected') {
+                    statusClass = 'status-rejected';
+                    if (request.rejectionReason) {
+                        notes = `<div class="rejection-note"><strong>Reason:</strong> ${request.rejectionReason}</div>`;
+                    } else {
+                        notes = `<div class="rejection-note">No reason provided</div>`;
+                    }
+                }
+
+                row.innerHTML = `
+                    <td>${request.employeeId}</td>
+                    <td>${request.employeeName}</td>
+                    <td>${productDisplay}</td>
+                    <td>${request.reason}</td>
+                    <td>${request.date}</td>
+                    <td><span class="status-badge ${statusClass}">${displayStatus}</span></td>
+                    <td>${notes}</td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        // Go back to inventory
+        function goBack() {
+            window.location.href = "index.html";
+        }
+
+        // Logout
+        function logout() {
+            localStorage.removeItem("loggedIn");
+            localStorage.removeItem("role");
+            window.location.href = "login.html";
+        }
+    </script>
+</body>
+</html>

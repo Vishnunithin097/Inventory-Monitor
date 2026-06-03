@@ -1,0 +1,995 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inventory Monitor</title>
+    <link rel="stylesheet" href="index.css">
+</head>
+<body>
+    <div class="dashboard">
+        <header class="db-header">
+            <h1>Inventory Monitor</h1>
+            <p>Real-time stock levels and tracking</p>
+            <button id="status-btn" class="status-btn" onclick="goToStatus()" style="display:none;">
+                Request Status
+            </button>
+            <button id="requests-btn" class="requests-btn" onclick="goToRequests()" style="display:none;">
+                Requests
+            </button>
+            <button id="logout-btn" class="logout-btn">
+           Logout
+        </button>
+        </header>
+
+        <!-- New Operational Input Form Section -->
+        <section class="form-container" style="background: #ffffff; padding: 20px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-bottom: 24px;">
+            <h3 style="margin-bottom: 12px; color: #1f2937; font-size: 16px;">Add / Update Inventory Register</h3>
+            <form id="inventory-form" style="display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end;">
+                <div style="flex: 1; min-width: 120px;">
+                    <label style="font-size: 12px; color: #6b7280; display: block; margin-bottom: 4px;">Item ID (Code)</label>
+                    <input type="text" id="form-item-id" placeholder="e.g., INV-005" required style="width: 100%; padding: 8px; border: 1px solid #d1d5db; border-radius: 4px; font-size: 14px;">
+                </div>
+                <div style="flex: 2; min-width: 180px;">
+                    <label style="font-size: 12px; color: #6b7280; display: block; margin-bottom: 4px;">Product Name</label>
+                    <input type="text" id="form-product-name" placeholder="e.g., Gaming Monitor" required style="width: 100%; padding: 8px; border: 1px solid #d1d5db; border-radius: 4px; font-size: 14px;">
+                </div>
+                <div style="flex: 1; min-width: 150px;">
+                    <label style="font-size: 12px; color: #6b7280; display: block; margin-bottom: 4px;">Location / Sector</label>
+                    <input type="text" id="form-location" list="warehouse-sectors" placeholder="Select or type new..." required style="width: 100%; padding: 8px; border: 1px solid #d1d5db; border-radius: 4px; font-size: 14px;">
+                    <datalist id="warehouse-sectors">
+                        <option value="Warehouse A"></option>
+                        <option value="Warehouse B"></option>
+                        <option value="Warehouse C"></option>
+                    </datalist>
+                </div>
+                <div style="flex: 1; min-width: 100px;">
+                    <label style="font-size: 12px; color: #6b7280; display: block; margin-bottom: 4px;">Stock Level</label>
+                    <input type="number" id="form-stock-level" placeholder="0" min="0" required style="width: 100%; padding: 8px; border: 1px solid #d1d5db; border-radius: 4px; font-size: 14px;">
+                </div>
+                <button type="submit" style="background-color: #3b82f6; color: white; border: none; padding: 9px 16px; border-radius: 4px; cursor: pointer; font-weight: 500; font-size: 14px;">
+                    Save Entry
+                </button>
+            </form>
+        </section>
+        
+
+
+
+       
+        <!-- Metrics Summary Grid -->
+        <section class="metrics-grid">
+
+            <div class="card product">
+                <h3>Total Sectors</h3>
+                <p class="number" id="product-wise-val">0</p>
+            </div>
+            <div class="card total">
+                <h3>Total Pieces Stocked</h3>
+                <p class="number" id="sector-wise-val">0</p>
+            </div>
+            <div class="card alert">
+                <h3>Low Stock Sectors</h3>
+                <p class="number" id="low-stock-val">0</p>
+            </div>
+            <div class="card out">
+                <h3>Out of Stock Sectors</h3>
+                <p class="number" id="out-of-stock-val">0</p>
+            </div>
+        </section>
+        <!-- Inventory Filters -->
+        <section class="filter-container">
+
+        <label><strong>Sort Inventory:</strong></label>
+
+        <select id="filter-type">
+        <option value="all">All</option>
+        <option value="location">By Location</option>
+        <option value="product">By Product</option>
+        <option value="stock">By Stock Status</option>
+        </select>
+
+        <div id="filter-options"></div>
+
+        </section>
+        <section class="table-container" style="margin-top:24px;">
+
+    <h3 style="padding:20px;">
+        Inventory Records
+    </h3>
+
+    <table>
+
+        <thead>
+            <tr>
+                <th>Employee ID</th>
+                <th>Product</th>
+                <th>Quantity</th>
+            </tr>
+        </thead>
+
+        <tbody id="assignment-table-body">
+
+        </tbody>
+
+    </table>
+
+</section>
+        
+        <!-- Data Table Structure -->
+        <section class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Item ID</th>
+                        <th>Product Name</th>
+                        <th>Location</th>
+                        <th>Stock Level</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="inventory-table-body">
+                 <!-- Generated rows appear here -->
+                </tbody>
+            </table>
+        </section>
+
+        <section class="request-container">
+
+<h3>Request Product Allocation</h3>
+
+<div class="request-row">
+    <button type="button" id="load-emp-btn" class="load-btn">Load Employee IDs</button>
+    <select id="req-emp-select" style="display:none;">
+        <option value="">Select Employee ID</option>
+    </select>
+</div>
+
+<div class="request-row">
+    <input type="text" id="req-name" placeholder="Employee Name" readonly>
+</div>
+
+<div style="background: #f9fafb; padding: 15px; border-radius: 6px; border: 1px solid #e5e7eb; margin-bottom: 15px;">
+    <h4 style="margin-bottom: 12px; color: #374151;">Request Products</h4>
+    <div id="products-container"></div>
+    <button type="button" id="add-product-btn" class="load-btn" style="margin-top: 10px;">+ Add Product</button>
+</div>
+
+<div class="request-row" style="flex-wrap:wrap;">
+    <textarea id="req-reason" placeholder="Reason for request" style="width:100%;"></textarea>
+</div>
+
+<button id="send-request-btn" style="background: #10b981; color: white; border: none; padding: 12px 18px; border-radius: 6px; cursor: pointer; font-weight: 600;">Send Request</button>
+
+</section>
+        
+    </div>
+
+    <script>
+        const userRole =
+        localStorage.getItem("role");
+        if(localStorage.getItem("loggedIn") !== "true"){
+        window.location.href = "login.html";
+        }
+        
+        const API_URL = 'http://localhost:5000/api/inventory';
+        let currentInventory = [];
+
+        let editMode = false;
+        let editingItemId = null;
+
+        document.addEventListener("DOMContentLoaded", () => {
+
+    const logoutBtn = document.getElementById("logout-btn");
+    const requestsBtn = document.getElementById("requests-btn");
+    const statusBtn = document.getElementById("status-btn");
+
+    if(logoutBtn){
+        logoutBtn.addEventListener("click", () => {
+
+            localStorage.removeItem("loggedIn");
+
+            window.location.href = "login.html";
+        });
+    }
+
+    // Show requests button for staff only
+    if(userRole === "staff" && requestsBtn){
+        requestsBtn.style.display = "inline-block";
+    }
+
+    // Show status button for admin only
+    if(userRole === "admin" && statusBtn){
+        statusBtn.style.display = "inline-block";
+    }
+
+    fetchInventoryData();
+    setupFormListener();
+    setupFilters();
+
+    const loadEmpBtn = document.getElementById('load-emp-btn');
+    const addProductBtn = document.getElementById('add-product-btn');
+    const empSelect = document.getElementById('req-emp-select');
+    const sendRequestBtn = document.getElementById('send-request-btn');
+    
+    if (loadEmpBtn) {
+        loadEmpBtn.addEventListener('click', loadEmployees);
+    }
+    
+    if (addProductBtn) {
+        addProductBtn.addEventListener('click', addProductRow);
+    }
+    
+    if (empSelect) {
+        empSelect.addEventListener('change', (e) => {
+            const selectedOption = e.target.options[e.target.selectedIndex];
+            const empName = selectedOption.dataset.name || '';
+            document.getElementById('req-name').value = empName;
+        });
+    }
+
+    if (sendRequestBtn) {
+        sendRequestBtn.addEventListener('click', sendProductRequest);
+    }
+
+    if(userRole === "staff"){
+
+        const reqSection =
+        document.querySelector(
+            ".request-container"
+        );
+
+        if(reqSection){
+            reqSection.style.display =
+            "none";
+        }
+    }
+if(userRole === "admin"){
+
+    const assignSection =
+    document.querySelector(
+        ".assign-container"
+    );
+
+    if(assignSection){
+        assignSection.style.display =
+        "none";
+    }
+}
+
+document
+.getElementById("product-select")
+?.addEventListener(
+    "change",
+    updateAvailableStock
+);
+
+document
+.getElementById("assign-quantity")
+?.addEventListener(
+    "input",
+    validateStock
+);
+
+document
+.getElementById("assign-btn")
+?.addEventListener(
+    "click",
+    assignInventory
+);});
+
+        // Pull live rows out from the backend server database
+        async function fetchInventoryData() {
+            try {
+                const response = await fetch(API_URL);
+                const data = await response.json();
+
+                currentInventory = data;
+
+                populateProductDropdown();
+
+                renderDashboard(data);
+            } catch (error) {
+                console.error("Error loading network data stream:", error);
+            }
+        }
+        async function deleteItem(itemId) {
+    const confirmDelete = confirm(
+        `Are you sure you want to delete ${itemId}?`
+    );
+
+    if (!confirmDelete) return;
+
+    try {
+        const response = await fetch(
+            `${API_URL}/${itemId}`,
+            {
+                method: 'DELETE'
+            }
+        );
+
+        const result = await response.json();
+
+        currentInventory = result.data;
+
+        renderDashboard(result.data);
+        document.getElementById("inventory-form").reset();
+    } catch (error) {
+        console.error("Delete failed:", error);
+    }
+}
+
+    function editItem(itemId) {
+        if(userRole === "admin"){
+
+    alert(
+        "Admin cannot delete inventory"
+    );
+
+    return;
+}
+    const item = currentInventory.find(
+        inv => inv.itemId === itemId
+    );
+
+    if (!item) return;
+
+    document.getElementById("form-item-id").value =
+        item.itemId;
+
+    document.getElementById("form-product-name").value =
+        item.productName;
+
+    document.getElementById("form-location").value =
+        item.location;
+
+    document.getElementById("form-stock-level").value =
+        item.stockLevel;
+
+    editMode = true;
+    editingItemId = itemId;
+
+    document.getElementById("form-item-id").readOnly = true;
+}
+
+        // Calculate and render all rows and 4 layout analytics cards
+        function renderDashboard(data) {
+            const tableBody = document.getElementById("inventory-table-body");
+            
+            let productWiseCount = 0;   
+            let sectorWiseCount = 0;    
+            let lowStockCount = 0;
+            let outOfStockCount = 0;
+
+            tableBody.innerHTML = "";
+
+            data.forEach(item => {
+                productWiseCount++; 
+                sectorWiseCount += Number(item.stockLevel); 
+
+                if (item.status === "Low Stock") {
+                    lowStockCount++;
+                } else if (item.status === "Out of Stock") {
+                    outOfStockCount++;
+                }
+
+                let badgeClass = "badge";
+                if (item.status === "In Stock") badgeClass += " in-stock";
+                if (item.status === "Low Stock") badgeClass += " low-stock";
+                if (item.status === "Out of Stock") badgeClass += " no-stock";
+                if (item.status === "No Complaints") badgeClass += " generic-stock"; 
+
+                const rowHTML = `
+                    <tr>
+                        <td>${item.itemId}</td>
+                        <td>${item.productName}</td>
+                        <td>${item.location}</td>
+                        <td>${item.stockLevel}</td>
+                        <td><span class="${badgeClass}">${item.status}</span></td>
+                        <td>
+                            ${userRole === "staff"?`
+                                <button class="modify-btn" onclick="editItem('${item.itemId}')">Modify</button>
+                                <button class="delete-btn" onclick="deleteItem('${item.itemId}')">Delete</button>
+                            ` : `View Only`}
+                        </td>
+                    </tr>
+                `;
+                tableBody.innerHTML += rowHTML;
+            });
+
+            document.getElementById("product-wise-val").textContent = productWiseCount;
+            document.getElementById("sector-wise-val").textContent = sectorWiseCount;
+            document.getElementById("low-stock-val").textContent = lowStockCount;
+            document.getElementById("out-of-stock-val").textContent = outOfStockCount;
+        }
+
+        // Intercept user entries and pipe them directly over POST to server.js
+        function setupFormListener() {
+            const form = document.getElementById("inventory-form");
+            
+            form.addEventListener("submit", async (event) => {
+                event.preventDefault(); 
+
+                const itemId = document.getElementById("form-item-id").value.trim();
+                const productName = document.getElementById("form-product-name").value.trim();
+                const location = document.getElementById("form-location").value.trim();
+                const stockLevel = parseInt(document.getElementById("form-stock-level").value);
+
+                // Check if item ID already exists and not in edit mode
+                if (!editMode) {
+                    const itemExists = currentInventory.some(item => item.itemId === itemId);
+                    if (itemExists) {
+                        alert(`Item ID "${itemId}" already exists in inventory. Staff check-in required to modify existing items.`);
+                        return;
+                    }
+                }
+
+                // Default Status Business Rules logic 
+                let status = "In Stock";
+                if (stockLevel === 0) {
+                    status = "Out of Stock";
+                } else if (stockLevel <= 30) {
+                    status = "Low Stock";
+                }
+
+                const payload = { itemId, productName, location, stockLevel, status };
+
+                try {
+                    let method = 'POST';
+                    let url = API_URL;
+
+                      if (editMode) {
+                      method = 'PUT';
+                      url = `${API_URL}/${editingItemId}`;
+                     }
+
+           const response = await fetch(url, {
+                                       method,
+                                       headers: {
+                                   'Content-Type': 'application/json'
+                                      },
+                               body: JSON.stringify(payload)
+          });
+                    
+                    const result = await response.json();
+                    
+                    // Refresh screen visuals using the updated dataset returned by the backend
+                   currentInventory = result.data;
+
+                   renderDashboard(result.data);
+                  editMode = false;
+                  editingItemId = null;
+
+                  document.getElementById("form-item-id").readOnly = false;
+
+                } catch (error) {
+                    console.error("Failed to commit live save request:", error);
+                }
+            });
+        }
+        function setupFilters() {
+
+    document
+        .getElementById("filter-type")
+        .addEventListener("change", renderFilterOptions);
+
+}
+
+function renderFilterOptions() {
+
+    const filterType =
+        document.getElementById("filter-type").value;
+
+    const container =
+        document.getElementById("filter-options");
+
+    container.innerHTML = "";
+
+    if (filterType === "all") {
+        renderDashboard(currentInventory);
+    }
+
+    else if (filterType === "location") {
+
+        const locations =
+            [...new Set(
+                currentInventory.map(
+                    item => item.location
+                )
+            )];
+
+        locations.forEach(location => {
+
+            container.innerHTML += `
+                <label style="margin-right:15px;">
+                    <input
+                        type="checkbox"
+                        value="${location}"
+                        class="location-filter">
+                    ${location}
+                </label>
+            `;
+        });
+
+        document
+            .querySelectorAll(".location-filter")
+            .forEach(cb => {
+                cb.addEventListener(
+                    "change",
+                    applyLocationFilter
+                );
+            });
+    }
+
+    else if (filterType === "product") {
+
+        const products =
+            [...new Set(
+                currentInventory.map(
+                    item => item.productName
+                )
+            )];
+
+        let html =
+            `<select id="product-filter">
+                <option value="">Select Product</option>`;
+
+        products.forEach(product => {
+
+            html += `
+                <option value="${product}">
+                    ${product}
+                </option>
+            `;
+        });
+
+        html += "</select>";
+
+        container.innerHTML = html;
+
+        document
+            .getElementById("product-filter")
+            .addEventListener(
+                "change",
+                applyProductFilter
+            );
+    }
+
+    else if (filterType === "stock") {
+
+        container.innerHTML = `
+            <select id="stock-filter">
+
+                <option value="">
+                    Select Status
+                </option>
+
+                <option value="In Stock">
+                    In Stock
+                </option>
+
+                <option value="Low Stock">
+                    Low Stock
+                </option>
+
+                <option value="Out of Stock">
+                    Out Of Stock
+                </option>
+
+            </select>
+        `;
+
+        document
+            .getElementById("stock-filter")
+            .addEventListener(
+                "change",
+                applyStockFilter
+            );
+    }
+}
+
+function applyLocationFilter() {
+
+    const selected =
+        [...document.querySelectorAll(
+            ".location-filter:checked"
+        )]
+        .map(cb => cb.value);
+
+    if(selected.length === 0){
+        renderDashboard(currentInventory);
+        return;
+    }
+
+    const filtered =
+        currentInventory.filter(
+            item =>
+            selected.includes(item.location)
+        );
+
+    renderDashboard(filtered);
+}
+
+function applyProductFilter() {
+
+    const selected =
+        document.getElementById(
+            "product-filter"
+        ).value;
+
+    if(!selected){
+        renderDashboard(currentInventory);
+        return;
+    }
+
+    const filtered =
+        currentInventory.filter(
+            item =>
+            item.productName === selected
+        );
+
+    renderDashboard(filtered);
+}
+
+function applyStockFilter() {
+
+    const selected =
+        document.getElementById(
+            "stock-filter"
+        ).value;
+
+    if(!selected){
+        renderDashboard(currentInventory);
+        return;
+    }
+
+    const filtered =
+        currentInventory.filter(
+            item =>
+            item.status === selected
+        );
+
+    renderDashboard(filtered);
+}
+function populateProductDropdown() {
+
+    const productSelect =
+    document.getElementById(
+        "product-select"
+    );
+
+    if(!productSelect) return;
+
+    productSelect.innerHTML =
+    `<option value="">
+        Select Product
+     </option>`;
+
+    currentInventory.forEach(item => {
+
+        productSelect.innerHTML += `
+            <option value="${item.productName}">
+                ${item.productName}
+                (${item.stockLevel} available)
+            </option>
+        `;
+    });
+}
+
+function updateAvailableStock() {
+
+    const selectedProduct =
+    document.getElementById(
+        "product-select"
+    ).value;
+
+    const product =
+    currentInventory.find(
+        item =>
+        item.productName === selectedProduct
+    );
+   if(product){
+
+    document.getElementById(
+        "available-stock"
+    ).value =
+    product.stockLevel;
+
+    document.getElementById(
+        "current-status"
+    ).innerHTML =
+    `Current Status: <strong>${product.status}</strong>`;
+}
+}
+
+function validateStock() {
+
+    const productName =
+    document.getElementById(
+        "product-select"
+    ).value;
+
+    const quantity =
+    Number(
+        document.getElementById(
+            "assign-quantity"
+        ).value
+    );
+
+    const alertBox =
+    document.getElementById(
+        "stock-alert"
+    );
+
+    const product =
+    currentInventory.find(
+        item =>
+        item.productName === productName
+    );
+
+    if(!product) return;
+
+    if(quantity > product.stockLevel){
+
+        alertBox.textContent =
+        `❌ Only ${product.stockLevel} available`;
+
+        alertBox.className =
+        "stock-error";
+    }
+    else{
+
+        alertBox.textContent = "";
+
+        alertBox.className =
+        "";
+    }
+}
+
+function assignInventory() {
+
+    const employee =
+    document.getElementById(
+        "employee-select"
+    ).value;
+
+    const productName =
+    document.getElementById(
+        "product-select"
+    ).value;
+
+    const quantity =
+    Number(
+        document.getElementById(
+            "assign-quantity"
+        ).value
+    );
+
+    if(!employee){
+
+        alert(
+            "Select Employee"
+        );
+
+        return;
+    }
+
+    if(!productName){
+
+        alert(
+            "Select Product"
+        );
+
+        return;
+    }
+
+    const product =
+    currentInventory.find(
+        item =>
+        item.productName === productName
+    );
+
+    if(!product){
+
+        return;
+    }
+
+    if(quantity > product.stockLevel){
+
+        alert(
+            "Not enough stock available"
+        );
+
+        return;
+    }
+
+    product.stockLevel -= quantity;
+
+    if(product.stockLevel === 0){
+
+        product.status =
+        "Out of Stock";
+    }
+    else if(product.stockLevel <= 30){
+
+        product.status =
+        "Low Stock";
+    }
+    else{
+
+        product.status =
+        "In Stock";
+    }
+
+    renderDashboard(
+        currentInventory
+    );
+
+    populateProductDropdown();
+
+    document.getElementById(
+        "available-stock"
+    ).value =
+    product.stockLevel;
+
+    alert(
+        `Assigned ${quantity} ${productName} to ${employee}`
+    );
+}
+
+// Load employees from employee.json
+async function loadEmployees() {
+    try {
+        const response = await fetch('employee.json');
+        const employees = await response.json();
+        
+        const empSelect = document.getElementById('req-emp-select');
+        empSelect.innerHTML = '<option value="">Select Employee ID</option>';
+        
+        employees.forEach(emp => {
+            const option = document.createElement('option');
+            option.value = emp.employeeId;
+            option.textContent = emp.employeeId + ' - ' + emp.employeeName;
+            option.dataset.name = emp.employeeName;
+            empSelect.appendChild(option);
+        });
+        
+        empSelect.style.display = 'inline-block';
+        document.getElementById('load-emp-btn').style.display = 'none';
+    } catch (error) {
+        console.error("Error loading employees:", error);
+        alert("Failed to load employees");
+    }
+}
+
+// Load products from inventory
+async function loadProducts() {
+    try {
+        const reqProductSelect = document.getElementById('req-product');
+        reqProductSelect.innerHTML = '<option value="">Select Product</option>';
+        
+        currentInventory.forEach(item => {
+            const option = document.createElement('option');
+            option.value = item.productName;
+            option.textContent = item.productName + ' (' + item.location + ') - Stock: ' + item.stockLevel;
+            reqProductSelect.appendChild(option);
+        });
+        
+        reqProductSelect.style.display = 'inline-block';
+        document.getElementById('load-product-btn').style.display = 'none';
+    } catch (error) {
+        console.error("Error loading products:", error);
+        alert("Failed to load products");
+    }
+}
+
+// Add a new product row to the request form
+function addProductRow() {
+    const container = document.getElementById('products-container');
+    const rowId = 'product-row-' + Date.now();
+    
+    let productOptions = '<option value="">Select Product</option>';
+    currentInventory.forEach(item => {
+        productOptions += `<option value="${item.productName}">${item.productName} (${item.location}) - Stock: ${item.stockLevel}</option>`;
+    });
+
+    const rowHTML = `
+        <div id="${rowId}" style="display: flex; gap: 10px; margin-bottom: 10px; align-items: flex-end;">
+            <select class="product-select" style="flex: 1; min-width: 200px; padding: 8px; border: 1px solid #d1d5db; border-radius: 4px; font-size: 14px;">
+                ${productOptions}
+            </select>
+            <button type="button" onclick="removeProductRow('${rowId}')" style="background: #ef4444; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; font-weight: 600; font-size: 12px;">
+                Remove
+            </button>
+        </div>
+    `;
+    container.innerHTML += rowHTML;
+}
+
+// Remove product row
+function removeProductRow(rowId) {
+    const row = document.getElementById(rowId);
+    if (row) {
+        row.remove();
+    }
+}
+
+// Setup request allocation event listeners
+// (Event listeners are now set up in DOMContentLoaded)
+
+// Navigate to requests page
+function goToRequests() {
+    window.location.href = "staff.html";
+}
+
+// Navigate to request status page
+function goToStatus() {
+    window.location.href = "admin-status.html";
+}
+
+// Send request from admin with multiple products
+async function sendProductRequest() {
+    const empId = document.getElementById('req-emp-select').value;
+    const empName = document.getElementById('req-name').value;
+    const reason = document.getElementById('req-reason').value;
+
+    if (!empId || !empName || !reason) {
+        alert('Please fill all fields');
+        return;
+    }
+
+    // Get all selected products
+    const productSelects = document.querySelectorAll('.product-select');
+    const products = [];
+    productSelects.forEach(select => {
+        if (select.value) {
+            products.push(select.value);
+        }
+    });
+
+    if (products.length === 0) {
+        alert('Please select at least one product');
+        return;
+    }
+
+    // Create request for each product (or send as one request with multiple products)
+    try {
+        const storedRequests = localStorage.getItem('productRequests');
+        let requests = storedRequests ? JSON.parse(storedRequests) : [];
+
+        // Create a single request with all products
+        const request = {
+            id: Date.now().toString(),
+            employeeId: empId,
+            employeeName: empName,
+            products: products,
+            reason: reason,
+            status: 'Pending',
+            date: new Date().toLocaleString()
+        };
+
+        requests.push(request);
+        localStorage.setItem('productRequests', JSON.stringify(requests));
+
+        const productList = products.join(', ');
+        alert(`Request sent successfully!\n\nEmployee: ${empName}\nProducts: ${productList}\n\nStaff will review this request.`);
+
+        // Clear form
+        document.getElementById('req-emp-select').value = '';
+        document.getElementById('req-name').value = '';
+        document.getElementById('products-container').innerHTML = '';
+        document.getElementById('req-reason').value = '';
+
+        // Reset buttons
+        document.getElementById('load-emp-btn').style.display = 'inline-block';
+        document.getElementById('req-emp-select').style.display = 'none';
+
+    } catch (error) {
+        console.error("Error sending request:", error);
+        alert("Failed to send request");
+    }
+}
+    </script>
+</body>
+</html>

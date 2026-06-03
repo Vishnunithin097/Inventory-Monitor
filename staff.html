@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Staff Dashboard - Requests</title>
+    <link rel="stylesheet" href="index.css">
+    <style>
+        .staff-header {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+            padding: 30px;
+            border-radius: 15px;
+            margin-bottom: 24px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+        }
+
+        .staff-header h1 {
+            font-size: 38px;
+            color: white;
+        }
+
+        .staff-header p {
+            font-size: 14px;
+            color: rgba(255,255,255,0.8);
+            margin-top: 8px;
+        }
+
+        .requests-section {
+            background: #ffffff;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+            margin-bottom: 24px;
+        }
+
+        .requests-section h2 {
+            margin-bottom: 20px;
+            color: #1f2937;
+        }
+
+        .requests-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+
+        .requests-table thead {
+            background: #f3f4f6;
+        }
+
+        .requests-table th {
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+            color: #374151;
+            border-bottom: 2px solid #e5e7eb;
+        }
+
+        .requests-table td {
+            padding: 12px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .requests-table tbody tr:hover {
+            background: #f9fafb;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .status-pending {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .status-approved {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .status-assigned {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .status-rejected {
+            background: #fee2e2;
+            color: #7f1d1d;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 8px;
+        }
+
+        .action-btn {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 12px;
+        }
+
+        .approve-btn {
+            background: #10b981;
+            color: white;
+        }
+
+        .approve-btn:hover {
+            background: #059669;
+        }
+
+        .reject-btn {
+            background: #ef4444;
+            color: white;
+        }
+
+        .reject-btn:hover {
+            background: #dc2626;
+        }
+
+        .no-requests {
+            text-align: center;
+            padding: 40px;
+            color: #9ca3af;
+        }
+
+        .logout-btn {
+            float: right;
+            background: #ef4444;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .logout-btn:hover {
+            background: #dc2626;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #9ca3af;
+        }
+
+        .empty-state p {
+            font-size: 16px;
+            margin-bottom: 10px;
+        }
+
+        #rejection-modal {
+            display: none !important;
+        }
+
+        #rejection-modal.show {
+            display: flex !important;
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard">
+        <header class="staff-header">
+            <button class="logout-btn" onclick="logout()">Logout</button>
+            <h1>Staff Dashboard</h1>
+            <p>Product Allocation Requests from Admin</p>
+        </header>
+
+        <section class="requests-section" id="requests-section">
+            <h2>Pending Requests</h2>
+            <button onclick="goToInventory()" style="background: #6b7280; color: white; border: none; padding: 10px 18px; border-radius: 6px; cursor: pointer; font-weight: 600; margin-bottom: 15px; margin-right: 10px;">
+                ← Back to Inventory
+            </button>
+            <button onclick="viewRequests()" style="background: #3b82f6; color: white; border: none; padding: 10px 18px; border-radius: 6px; cursor: pointer; font-weight: 600; margin-bottom: 15px;">
+                Refresh Requests
+            </button>
+
+            <div id="requests-container">
+                <table class="requests-table" id="requests-table" style="display: none;">
+                    <thead>
+                        <tr>
+                            <th>Employee ID</th>
+                            <th>Employee Name</th>
+                            <th>Requested Product</th>
+                            <th>Reason</th>
+                            <th>Date</th>
+                            <th>Status</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="requests-body">
+                    </tbody>
+                </table>
+                <div class="empty-state" id="empty-state">
+                    <p>No pending requests yet.</p>
+                    <p>Requests from admin will appear here.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Assign Inventory Section for Approved Requests -->
+        <section id="assign-section" class="requests-section" style="display: none;">
+            <button onclick="backToRequests()" style="background: #6b7280; color: white; border: none; padding: 10px 18px; border-radius: 6px; cursor: pointer; font-weight: 600; margin-bottom: 15px;">
+                ← Back to Requests
+            </button>
+            
+            <h2>Assign Inventory for Approved Request</h2>
+            
+            <div style="background: #f0f9ff; padding: 15px; border-radius: 6px; border-left: 4px solid #3b82f6; margin-bottom: 20px;">
+                <p><strong>Employee:</strong> <span id="assign-emp-name"></span> (<span id="assign-emp-id"></span>)</p>
+                <p><strong>Products Requested:</strong> <span id="assign-product-names"></span></p>
+                <p><strong>Reason:</strong> <span id="assign-reason"></span></p>
+            </div>
+
+            <form id="assign-form" style="display: flex; flex-direction: column; gap: 15px;">
+                <div id="products-to-assign-container"></div>
+                
+                <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                    <button type="button" id="add-assign-product-btn" class="load-btn" style="background: #3b82f6;">+ Add Another Product</button>
+                </div>
+
+                <p id="assign-stock-alert" style="margin: 0;"></p>
+
+                <button type="button" id="complete-assign-btn" class="assign-btn" style="background: #10b981; color: white; border: none; padding: 12px; border-radius: 6px; cursor: pointer; font-weight: 600;">
+                    Complete Assignment
+                </button>
+            </form>
+        </section>
+    </div>
+
+    <!-- Rejection Reason Modal -->
+    <div id="rejection-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center;">
+        <div style="background: white; padding: 30px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.15); max-width: 500px; width: 90%;">
+            <h2 style="margin-bottom: 15px; color: #1f2937;">Provide Rejection Reason</h2>
+            <p style="color: #6b7280; margin-bottom: 15px;">Please provide a reason for rejecting this request. This will help the admin understand why the request was rejected.</p>
+            <textarea id="rejection-reason" placeholder="Enter reason for rejection..." style="width: 100%; padding: 12px; border: 1px solid #d1d5db; border-radius: 6px; min-height: 120px; font-family: inherit; font-size: 14px; margin-bottom: 15px; resize: vertical;"></textarea>
+            <div style="display: flex; gap: 10px;">
+                <button onclick="submitRejection()" style="flex: 1; background: #ef4444; color: white; border: none; padding: 12px; border-radius: 6px; cursor: pointer; font-weight: 600;">
+                    Submit Rejection
+                </button>
+                <button onclick="cancelRejection()" style="flex: 1; background: #6b7280; color: white; border: none; padding: 12px; border-radius: 6px; cursor: pointer; font-weight: 600;">
+                    Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Check if staff is logged in
+        if (localStorage.getItem("loggedIn") !== "true" || localStorage.getItem("role") !== "staff") {
+            window.location.href = "login.html";
+        }
+
+        let currentRejectionId = null;
+        let currentApprovedRequest = null;
+        const API_URL = 'http://localhost:5000/api/inventory';
+        let staffInventory = [];
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', () => {
+            viewRequests();
+            
+            // Load inventory for assignment
+            fetchStaffInventory();
+            
+            // Setup assignment button listener
+            const completeAssignBtn = document.getElementById('complete-assign-btn');
+            if (completeAssignBtn) {
+                completeAssignBtn.addEventListener('click', completeAssignment);
+            }
+        });
+
+        // Fetch inventory data
+        async function fetchStaffInventory() {
+            try {
+                const response = await fetch(API_URL);
+                staffInventory = await response.json();
+            } catch (error) {
+                console.error("Error loading inventory:", error);
+            }
+        }
+
+        // View all requests
+        async function viewRequests() {
+            try {
+                // Try to fetch from requests.json first
+                let requests = [];
+                try {
+                    const response = await fetch('requests.json');
+                    if (response.ok) {
+                        requests = await response.json();
+                    }
+                } catch (e) {
+                    console.log("Could not load requests.json");
+                }
+
+                // Also check localStorage
+                const storedRequests = localStorage.getItem('productRequests');
+                if (storedRequests) {
+                    const stored = JSON.parse(storedRequests);
+                    requests = requests.concat(stored.filter(r => !requests.find(req => req.id === r.id)));
+                }
+
+                displayRequests(requests);
+            } catch (error) {
+                console.error("Error loading requests:", error);
+            }
+        }
+
+        // Display requests in table
+        function displayRequests(requests) {
+            const table = document.getElementById('requests-table');
+            const tbody = document.getElementById('requests-body');
+            const emptyState = document.getElementById('empty-state');
+
+            if (!requests || requests.length === 0) {
+                table.style.display = 'none';
+                emptyState.style.display = 'block';
+                return;
+            }
+
+            table.style.display = 'table';
+            emptyState.style.display = 'none';
+            tbody.innerHTML = '';
+
+            requests.forEach(request => {
+                const row = document.createElement('tr');
+                
+                let statusClass = 'status-pending';
+                let displayStatus = request.status;
+                
+                if (request.status === 'Approved') {
+                    statusClass = 'status-assigned';
+                    displayStatus = 'Assigned';
+                }
+                if (request.status === 'Rejected') statusClass = 'status-rejected';
+
+                // Handle both single and multiple products
+                let productDisplay = request.product || (request.products ? request.products.join(', ') : '');
+
+                row.innerHTML = `
+                    <td>${request.employeeId}</td>
+                    <td>${request.employeeName}</td>
+                    <td>${productDisplay}</td>
+                    <td>${request.reason}</td>
+                    <td>${request.date}</td>
+                    <td><span class="status-badge ${statusClass}">${displayStatus}</span></td>
+                    <td>
+                        ${request.status === 'Pending' ? `
+                            <div class="action-buttons">
+                                <button class="action-btn approve-btn" onclick="approveRequest('${request.id}')">Approve</button>
+                                <button class="action-btn reject-btn" onclick="rejectRequest('${request.id}')">Reject</button>
+                            </div>
+                        ` : `<span style="color: #9ca3af;">Already ${displayStatus}</span>`}
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        // Approve request
+        function approveRequest(id) {
+            const storedRequests = localStorage.getItem('productRequests');
+            const requests = storedRequests ? JSON.parse(storedRequests) : [];
+            const request = requests.find(r => r.id === id);
+
+            if (request && confirm('Are you sure you want to approve this request?')) {
+                // Store the request for assignment
+                localStorage.setItem('requestToAssign', JSON.stringify(request));
+                
+                // Show assignment section
+                document.getElementById('requests-section').style.display = 'none';
+                document.getElementById('assign-section').style.display = 'block';
+                
+                // Scroll to assignment form
+                document.getElementById('assign-section').scrollIntoView({ behavior: 'smooth' });
+                
+                // Pre-fill the assignment form
+                prefillAssignmentForm(request);
+            }
+        }
+
+        // Reject request
+        function rejectRequest(id) {
+            currentRejectionId = id;
+            document.getElementById('rejection-modal').classList.add('show');
+            document.getElementById('rejection-reason').value = '';
+            document.getElementById('rejection-reason').focus();
+        }
+
+        // Submit rejection with reason
+        function submitRejection() {
+            const reason = document.getElementById('rejection-reason').value.trim();
+            
+            if (!reason) {
+                alert('Please provide a reason for rejection');
+                return;
+            }
+
+            if (currentRejectionId) {
+                updateRequestStatus(currentRejectionId, 'Rejected', reason);
+                cancelRejection();
+            }
+        }
+
+        // Cancel rejection
+        function cancelRejection() {
+            document.getElementById('rejection-modal').classList.remove('show');
+            document.getElementById('rejection-reason').value = '';
+            currentRejectionId = null;
+        }
+
+        // Update request status
+        function updateRequestStatus(id, status, reason = '') {
+            try {
+                const storedRequests = localStorage.getItem('productRequests');
+                const requests = storedRequests ? JSON.parse(storedRequests) : [];
+                
+                const request = requests.find(r => r.id === id);
+                if (request) {
+                    request.status = status;
+                    if (reason) {
+                        request.rejectionReason = reason;
+                    }
+                    localStorage.setItem('productRequests', JSON.stringify(requests));
+                    alert(`Request ${status.toLowerCase()} successfully!`);
+                    viewRequests();
+                }
+            } catch (error) {
+                console.error("Error updating request:", error);
+                alert('Failed to update request');
+            }
+        }
+
+        // Pre-fill assignment form with request details
+        function prefillAssignmentForm(request) {
+            currentApprovedRequest = request;
+            
+            // Display request details
+            document.getElementById('assign-emp-id').textContent = request.employeeId;
+            document.getElementById('assign-emp-name').textContent = request.employeeName;
+            
+            // Handle both single product and multiple products
+            let productNames = request.product;
+            let products = request.products || (request.product ? [request.product] : []);
+            
+            if (Array.isArray(request.products)) {
+                productNames = request.products.join(', ');
+            }
+            document.getElementById('assign-product-names').textContent = productNames;
+            document.getElementById('assign-reason').textContent = request.reason;
+
+            // Clear container and add product assignment rows for each product
+            const container = document.getElementById('products-to-assign-container');
+            container.innerHTML = '';
+            
+            products.forEach((productName, index) => {
+                const product = staffInventory.find(item => item.productName === productName);
+                const rowId = 'assign-row-' + index;
+                
+                let stockLevel = 0;
+                if (product) {
+                    stockLevel = product.stockLevel;
+                }
+
+                const rowHTML = `
+                    <div id="${rowId}" style="background: #f9fafb; padding: 15px; border-radius: 6px; border: 1px solid #e5e7eb; margin-bottom: 15px;">
+                        <h4 style="margin-bottom: 10px; color: #1f2937;">${productName}</h4>
+                        
+                        <div style="margin-bottom: 12px;">
+                            <label style="font-weight: 600; margin-bottom: 5px; display: block; font-size: 12px;">Available Stock</label>
+                            <input type="text" value="${stockLevel}" readonly style="width: 100%; padding: 8px; border: 1px solid #d1d5db; border-radius: 4px; background: #f3f4f6; font-size: 14px;">
+                        </div>
+
+                        <div>
+                            <label style="font-weight: 600; margin-bottom: 5px; display: block; font-size: 12px;">Quantity to Assign</label>
+                            <input type="number" class="assign-qty" data-product="${productName}" data-stock="${stockLevel}" min="1" placeholder="Enter quantity" style="width: 100%; padding: 8px; border: 1px solid #d1d5db; border-radius: 4px; font-size: 14px;">
+                            <p class="stock-validation" style="margin: 5px 0; font-size: 12px;"></p>
+                        </div>
+                    </div>
+                `;
+                container.innerHTML += rowHTML;
+            });
+
+            // Add event listeners for quantity validation
+            document.querySelectorAll('.assign-qty').forEach(input => {
+                input.addEventListener('input', validateStaffAssignmentQty);
+            });
+
+            // Clear alert
+            document.getElementById('assign-stock-alert').textContent = '';
+        }
+
+        // Validate quantity input for assignment
+        function validateStaffAssignmentQty(e) {
+            const quantity = parseInt(e.target.value) || 0;
+            const available = parseInt(e.target.dataset.stock) || 0;
+            const validationEl = e.target.parentElement.querySelector('.stock-validation');
+
+            if (quantity > available) {
+                validationEl.textContent = `⚠️ Not enough stock. Available: ${available}`;
+                validationEl.style.color = '#ef4444';
+            } else if (quantity > 0) {
+                validationEl.textContent = `✓ Valid quantity`;
+                validationEl.style.color = '#10b981';
+            } else {
+                validationEl.textContent = '';
+            }
+        }
+
+        // Complete inventory assignment
+        async function completeAssignment() {
+            if (!currentApprovedRequest) {
+                alert('No request selected');
+                return;
+            }
+
+            // Collect all quantities
+            const assignments = [];
+            const quantityInputs = document.querySelectorAll('.assign-qty');
+            
+            quantityInputs.forEach(input => {
+                const productName = input.dataset.product;
+                const quantity = parseInt(input.value);
+                const available = parseInt(input.dataset.stock);
+
+                if (!quantity || quantity <= 0) {
+                    alert(`Please enter a valid quantity for ${productName}`);
+                    return;
+                }
+
+                if (quantity > available) {
+                    alert(`Not enough stock for ${productName}. Available: ${available}`);
+                    return;
+                }
+
+                assignments.push({ productName, quantity });
+            });
+
+            if (assignments.length === 0) {
+                alert('Please enter quantities for at least one product');
+                return;
+            }
+
+            try {
+                // Update inventory for each product
+                for (let assignment of assignments) {
+                    const product = staffInventory.find(item => item.productName === assignment.productName);
+                    if (product) {
+                        const updatedStockLevel = product.stockLevel - assignment.quantity;
+                        let status = 'In Stock';
+                        if (updatedStockLevel === 0) {
+                            status = 'Out of Stock';
+                        } else if (updatedStockLevel <= 30) {
+                            status = 'Low Stock';
+                        }
+
+                        const response = await fetch(`${API_URL}/${product.itemId}`, {
+                            method: 'PUT',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                ...product,
+                                stockLevel: updatedStockLevel,
+                                status: status
+                            })
+                        });
+
+                        if (!response.ok) {
+                            alert('Failed to update inventory for ' + assignment.productName);
+                            return;
+                        }
+                    }
+                }
+
+                // Update request status to Approved
+                updateRequestStatus(currentApprovedRequest.id, 'Approved');
+                
+                const assignmentSummary = assignments.map(a => `${a.quantity} units of ${a.productName}`).join(', ');
+                alert(`✓ Successfully assigned:\n${assignmentSummary}\n\nTo: ${currentApprovedRequest.employeeName}`);
+                
+                // Reset and go back to requests
+                backToRequests();
+            } catch (error) {
+                console.error("Error completing assignment:", error);
+                alert('Failed to complete assignment');
+            }
+        }
+
+        // Go back to requests list
+        function backToRequests() {
+            document.getElementById('assign-section').style.display = 'none';
+            document.getElementById('requests-section').style.display = 'block';
+            currentApprovedRequest = null;
+            viewRequests();
+        }
+
+        // Go back to inventory
+        function goToInventory() {
+            window.location.href = "index.html";
+        }
+
+        // Logout
+        function logout() {
+            localStorage.removeItem("loggedIn");
+            localStorage.removeItem("role");
+            window.location.href = "login.html";
+        }
+    </script>
+</body>
+</html>
