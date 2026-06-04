@@ -489,30 +489,46 @@
                 modalBody.innerHTML = '<div class="no-complaints"><p>No complaints yet.</p></div>';
             } else {
                 let complaintsHTML = '';
-                complaints.forEach(complaint => {
-                    const priorityClass = `priority-${complaint.priority.toLowerCase()}`;
-                    complaintsHTML += `
-                        <div class="complaint-item">
-                            <div class="complaint-header">
-                                <div>
-                                    <div class="complaint-title">${complaint.subject}</div>
-                                    <div class="complaint-meta">
-                                        <strong>${complaint.employeeName}</strong> (ID: ${complaint.employeeId}) | 
-                                        ${complaint.date} ${complaint.time}
-                                    </div>
-                                </div>
-                                <span class="complaint-priority ${priorityClass}">${complaint.priority}</span>
-                            </div>
-                            <div class="complaint-description">${complaint.description}</div>
-                            <span class="complaint-status">${complaint.status}</span>
-                        </div>
-                    `;
-                });
+                complaints.forEach((complaint, index) => {
+    const priorityClass = `priority-${complaint.priority.toLowerCase()}`;
+    
+    // Only show button if it's not already read
+    const readButton = !complaint.read 
+        ? `<button onclick="markAsRead(${index})" style="margin-top: 10px; cursor: pointer;">Mark as Read</button>` 
+        : '<span style="color: green; font-size: 12px;">✓ Read</span>';
+
+    complaintsHTML += `
+        <div class="complaint-item" style="border: 1px solid #ddd; padding: 10px; margin-bottom: 10px;">
+            <div class="complaint-header">
+                <div>
+                    <div class="complaint-title">${complaint.subject}</div>
+                    <div class="complaint-meta"><strong>${complaint.employeeName}</strong> | ${complaint.date}</div>
+                </div>
+                <span class="complaint-priority ${priorityClass}">${complaint.priority}</span>
+            </div>
+            <div class="complaint-description">${complaint.description}</div>
+            ${readButton}
+        </div>
+    `;
+});
                 modalBody.innerHTML = complaintsHTML;
             }
 
             modal.classList.add('show');
         }
+        function markAsRead(index) {
+    let complaints = getComplaints();
+    
+    // Mark the specific index as read
+    if (complaints[index]) {
+        complaints[index].read = true;
+        localStorage.setItem('complaints', JSON.stringify(complaints));
+    }
+    
+    // Refresh the modal content and the badge
+    openComplaintsModal(); 
+    updateComplaintCount();
+}
 
         // Close Complaints Modal
         function closeComplaintsModal() {
@@ -530,17 +546,20 @@
             }
         }
 
-        // Update complaint count badge
-        function updateComplaintCount() {
-            const complaints = getComplaints();
-            const countElement = document.getElementById('complaint-count');
-            if (complaints && complaints.length > 0) {
-                countElement.textContent = complaints.length;
-                countElement.style.display = 'flex';
-            } else {
-                countElement.style.display = 'none';
-            }
-        }
+        // Update this function to filter unread complaints
+function updateComplaintCount() {
+    const complaints = getComplaints();
+    // Count only items where 'read' is NOT true (or doesn't exist yet)
+    const unreadCount = complaints.filter(c => !c.read).length;
+    
+    const countElement = document.getElementById('complaint-count');
+    if (unreadCount > 0) {
+        countElement.textContent = unreadCount;
+        countElement.style.display = 'flex';
+    } else {
+        countElement.style.display = 'none';
+    }
+}
 
         // Logout
         function logout() {
