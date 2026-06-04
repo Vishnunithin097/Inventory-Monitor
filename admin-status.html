@@ -161,12 +161,186 @@
         .logout-btn:hover {
             background: #dc2626;
         }
+
+        .complaints-icon {
+            position: relative;
+            display: inline-block;
+            background: #f59e0b;
+            color: white;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            margin-left: 10px;
+            font-size: 14px;
+        }
+
+        .complaints-icon:hover {
+            background: #d97706;
+        }
+
+        .complaint-badge {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: #ef4444;
+            color: white;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        #complaints-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        #complaints-modal.show {
+            display: flex;
+        }
+
+        .complaints-modal-content {
+            background: white;
+            border-radius: 15px;
+            max-width: 1000px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+        }
+
+        .complaints-modal-header {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            color: white;
+            padding: 30px;
+            border-radius: 15px 15px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .complaints-modal-header h2 {
+            margin: 0;
+            font-size: 24px;
+        }
+
+        .complaints-close-btn {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .complaints-modal-body {
+            padding: 30px;
+        }
+
+        .complaint-item {
+            background: #f9fafb;
+            border-left: 4px solid #f59e0b;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 6px;
+        }
+
+        .complaint-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 10px;
+        }
+
+        .complaint-title {
+            font-weight: 600;
+            color: #1f2937;
+            font-size: 16px;
+        }
+
+        .complaint-priority {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .priority-low {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .priority-medium {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .priority-high {
+            background: #fed7aa;
+            color: #9a3412;
+        }
+
+        .priority-urgent {
+            background: #fee2e2;
+            color: #7f1d1d;
+        }
+
+        .complaint-meta {
+            font-size: 12px;
+            color: #6b7280;
+            margin-bottom: 10px;
+        }
+
+        .complaint-description {
+            color: #374151;
+            line-height: 1.5;
+            margin-bottom: 10px;
+        }
+
+        .complaint-status {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .no-complaints {
+            text-align: center;
+            padding: 40px;
+            color: #9ca3af;
+        }
     </style>
 </head>
 <body>
     <div class="dashboard">
-        <header class="admin-header">
-            <button class="logout-btn" onclick="logout()">Logout</button>
+        <header class="admin-header" style="position: relative;">
+            <!-- New container for vertical button alignment -->
+            <div style="position: absolute; top: 30px; right: 30px; display: flex; flex-direction: column; gap: 10px;">
+                <button class="logout-btn" onclick="logout()" style="float: none; margin: 0;">Logout</button>
+                <button id="complaints-btn" class="complaints-icon" onclick="openComplaintsModal()" style="margin: 0; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                    ⚠️ Complaints
+                    <span class="complaint-badge" id="complaint-count" style="display: none;">0</span>
+                </button>
+            </div>
+
             <h1>Request Status</h1>
             <p>Track requests sent to staff for approval</p>
         </header>
@@ -203,6 +377,21 @@
         </section>
     </div>
 
+    <!-- Complaints Modal -->
+    <div id="complaints-modal">
+        <div class="complaints-modal-content">
+            <div class="complaints-modal-header">
+                <h2>📋 Staff Complaints</h2>
+                <button class="complaints-close-btn" onclick="closeComplaintsModal()">&times;</button>
+            </div>
+            <div class="complaints-modal-body" id="complaints-modal-body">
+                <div class="no-complaints">
+                    <p>No complaints yet.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
         // Check if admin is logged in
         if (localStorage.getItem("loggedIn") !== "true" || localStorage.getItem("role") !== "admin") {
@@ -215,6 +404,10 @@
             
             // Auto-refresh every 5 seconds
             setInterval(viewRequestStatus, 5000);
+            
+            // Update complaint count
+            updateComplaintCount();
+            setInterval(updateComplaintCount, 5000);
         });
 
         // View request status
@@ -284,6 +477,69 @@
         // Go back to inventory
         function goBack() {
             window.location.href = "index.html";
+        }
+
+        // Open Complaints Modal
+        function openComplaintsModal() {
+            const complaints = getComplaints();
+            const modal = document.getElementById('complaints-modal');
+            const modalBody = document.getElementById('complaints-modal-body');
+
+            if (!complaints || complaints.length === 0) {
+                modalBody.innerHTML = '<div class="no-complaints"><p>No complaints yet.</p></div>';
+            } else {
+                let complaintsHTML = '';
+                complaints.forEach(complaint => {
+                    const priorityClass = `priority-${complaint.priority.toLowerCase()}`;
+                    complaintsHTML += `
+                        <div class="complaint-item">
+                            <div class="complaint-header">
+                                <div>
+                                    <div class="complaint-title">${complaint.subject}</div>
+                                    <div class="complaint-meta">
+                                        <strong>${complaint.employeeName}</strong> (ID: ${complaint.employeeId}) | 
+                                        ${complaint.date} ${complaint.time}
+                                    </div>
+                                </div>
+                                <span class="complaint-priority ${priorityClass}">${complaint.priority}</span>
+                            </div>
+                            <div class="complaint-description">${complaint.description}</div>
+                            <span class="complaint-status">${complaint.status}</span>
+                        </div>
+                    `;
+                });
+                modalBody.innerHTML = complaintsHTML;
+            }
+
+            modal.classList.add('show');
+        }
+
+        // Close Complaints Modal
+        function closeComplaintsModal() {
+            document.getElementById('complaints-modal').classList.remove('show');
+        }
+
+        // Get Complaints from localStorage
+        function getComplaints() {
+            try {
+                const storedComplaints = localStorage.getItem('complaints');
+                return storedComplaints ? JSON.parse(storedComplaints) : [];
+            } catch (error) {
+                console.error("Error parsing complaints:", error);
+                return [];
+            }
+        }
+
+        // Update complaint count badge
+        function updateComplaintCount() {
+            const complaints = getComplaints();
+            const countElement = document.getElementById('complaint-count');
+            if (complaints && complaints.length > 0) {
+                countElement.textContent = complaints.length;
+                countElement.style.display = 'flex';
+            } else {
+                countElement.style.display = 'none';
+            }
         }
 
         // Logout

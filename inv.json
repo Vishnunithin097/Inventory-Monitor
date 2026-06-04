@@ -31,7 +31,7 @@
     "itemId": "INV-006",
     "productName": "headphones",
     "location": "Warehouse E",
-    "stockLevel": 0,
-    "status": "Out of Stock"
+    "stockLevel": 8,
+    "status": "Low Stock"
   }
 ]
