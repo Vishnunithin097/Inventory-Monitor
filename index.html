@@ -841,7 +841,8 @@ function assignInventory() {
 // Load employees from employee.json
 async function loadEmployees() {
     try {
-        const response = await fetch('employee.json');
+        
+        const response = await fetch('http://localhost:5000/api/employees'); 
         const employees = await response.json();
         
         const empSelect = document.getElementById('req-emp-select');
@@ -849,8 +850,9 @@ async function loadEmployees() {
         
         employees.forEach(emp => {
             const option = document.createElement('option');
-            option.value = emp.employeeId;
-            option.textContent = emp.employeeId + ' - ' + emp.employeeName;
+            
+            option.value = emp.employeeID; 
+            option.textContent = emp.employeeID + ' - ' + emp.employeeName;
             option.dataset.name = emp.employeeName;
             empSelect.appendChild(option);
         });
@@ -859,9 +861,10 @@ async function loadEmployees() {
         document.getElementById('load-emp-btn').style.display = 'none';
     } catch (error) {
         console.error("Error loading employees:", error);
-        alert("Failed to load employees");
+        alert("Failed to load employees from Database");
     }
 }
+
 
 // Load products from inventory
 async function loadProducts() {

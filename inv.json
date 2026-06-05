@@ -3,14 +3,14 @@
     "itemId": "INV-001",
     "productName": "Wireless Mouse",
     "location": "Warehouse A",
-    "stockLevel": 76,
+    "stockLevel": 75,
     "status": "In Stock"
   },
   {
     "itemId": "INV-002",
     "productName": "Monitor",
     "location": "Warehouse B",
-    "stockLevel": 8,
+    "stockLevel": 7,
     "status": "Low Stock"
   },
   {
@@ -31,7 +31,7 @@
     "itemId": "INV-006",
     "productName": "headphones",
     "location": "Warehouse E",
-    "stockLevel": 8,
+    "stockLevel": 5,
     "status": "Low Stock"
   }
 ]
