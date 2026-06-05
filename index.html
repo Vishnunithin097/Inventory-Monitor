@@ -887,7 +887,6 @@ async function loadProducts() {
     }
 }
 
-// Add a new product row to the request form
 function addProductRow() {
     const container = document.getElementById('products-container');
     const rowId = 'product-row-' + Date.now();
@@ -897,6 +896,7 @@ function addProductRow() {
         productOptions += `<option value="${item.productName}">${item.productName} (${item.location}) - Stock: ${item.stockLevel}</option>`;
     });
 
+    
     const rowHTML = `
         <div id="${rowId}" style="display: flex; gap: 10px; margin-bottom: 10px; align-items: flex-end;">
             <select class="product-select" style="flex: 1; min-width: 200px; padding: 8px; border: 1px solid #d1d5db; border-radius: 4px; font-size: 14px;">
@@ -907,7 +907,9 @@ function addProductRow() {
             </button>
         </div>
     `;
-    container.innerHTML += rowHTML;
+    
+    
+    container.insertAdjacentHTML('beforeend', rowHTML);
 }
 
 // Remove product row

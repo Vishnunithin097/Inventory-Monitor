@@ -17,21 +17,14 @@
     "itemId": "INV-003",
     "productName": "Mechanical Keyboard",
     "location": "Warehouse C",
-    "stockLevel": 39,
+    "stockLevel": 37,
     "status": "In Stock"
   },
   {
     "itemId": "INV-004",
     "productName": "CPU",
     "location": "Warehouse D",
-    "stockLevel": 30,
-    "status": "Low Stock"
-  },
-  {
-    "itemId": "INV-006",
-    "productName": "headphones",
-    "location": "Warehouse E",
-    "stockLevel": 5,
+    "stockLevel": 28,
     "status": "Low Stock"
   }
 ]
