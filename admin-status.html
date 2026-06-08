@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin - Request Status</title>
+    <title>Admin Dashboard - Allocation Status</title>
     <link rel="stylesheet" href="index.css">
     <style>
         .admin-header {
-            background: linear-gradient(135deg, #2563eb, #1e40af);
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
             color: white;
             padding: 30px;
             border-radius: 15px;
@@ -57,23 +57,14 @@
             border-bottom: 2px solid #e5e7eb;
         }
 
-        .status-table th:last-child {
-            min-width: 250px;
-        }
-
         .status-table td {
             padding: 12px;
             border-bottom: 1px solid #e5e7eb;
+            font-size: 14px;
         }
 
         .status-table tbody tr:hover {
             background: #f9fafb;
-        }
-
-        .rejection-note {
-            color: #dc2626;
-            font-size: 12px;
-            line-height: 1.5;
         }
 
         .status-badge {
@@ -84,67 +75,14 @@
             font-weight: 600;
         }
 
-        .status-pending {
-            background: #fef3c7;
-            color: #92400e;
-        }
+        .status-pending { background: #fef3c7; color: #92400e; }
+        .status-approved { background: #d1fae5; color: #065f46; }
+        .status-rejected { background: #fee2e2; color: #7f1d1d; }
 
-        .status-assigned {
-            background: #d1fae5;
-            color: #065f46;
-        }
-
-        .status-rejected {
-            background: #fee2e2;
-            color: #7f1d1d;
-        }
-
-        .back-btn {
-            background: #6b7280;
-            color: white;
-            border: none;
-            padding: 10px 18px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: 600;
-            margin-bottom: 15px;
-        }
-
-        .back-btn:hover {
-            background: #4b5563;
-        }
-
-        .refresh-btn {
-            background: #3b82f6;
-            color: white;
-            border: none;
-            padding: 10px 18px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: 600;
-            margin-bottom: 15px;
-            margin-left: 10px;
-        }
-
-        .refresh-btn:hover {
-            background: #2563eb;
-        }
-
-        .no-requests {
-            text-align: center;
-            padding: 40px;
-            color: #9ca3af;
-        }
-
-        .empty-state {
-            text-align: center;
-            padding: 60px 20px;
-            color: #9ca3af;
-        }
-
-        .empty-state p {
-            font-size: 16px;
-            margin-bottom: 10px;
+        .comment-text {
+            font-style: italic;
+            color: #4b5563;
+            font-size: 13px;
         }
 
         .logout-btn {
@@ -158,277 +96,80 @@
             font-weight: 600;
         }
 
-        .logout-btn:hover {
-            background: #dc2626;
-        }
-
-        .complaints-icon {
-            position: relative;
-            display: inline-block;
-            background: #f59e0b;
-            color: white;
-            border: none;
-            padding: 10px 16px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: 600;
-            margin-left: 10px;
-            font-size: 14px;
-        }
-
-        .complaints-icon:hover {
-            background: #d97706;
-        }
-
-        .complaint-badge {
-            position: absolute;
-            top: -8px;
-            right: -8px;
-            background: #ef4444;
-            color: white;
-            border-radius: 50%;
-            width: 24px;
-            height: 24px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 12px;
-            font-weight: 700;
-        }
-
-        #complaints-modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.7);
-            z-index: 2000;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
-        }
-
-        #complaints-modal.show {
-            display: flex;
-        }
-
-        .complaints-modal-content {
-            background: white;
-            border-radius: 15px;
-            max-width: 1000px;
-            width: 100%;
-            max-height: 90vh;
-            overflow-y: auto;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
-        }
-
-        .complaints-modal-header {
-            background: linear-gradient(135deg, #f59e0b, #d97706);
-            color: white;
-            padding: 30px;
-            border-radius: 15px 15px 0 0;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .complaints-modal-header h2 {
-            margin: 0;
-            font-size: 24px;
-        }
-
-        .complaints-close-btn {
-            background: none;
-            border: none;
-            color: white;
-            font-size: 24px;
-            cursor: pointer;
-            font-weight: bold;
-        }
-
-        .complaints-modal-body {
-            padding: 30px;
-        }
-
-        .complaint-item {
-            background: #f9fafb;
-            border-left: 4px solid #f59e0b;
-            padding: 15px;
-            margin-bottom: 15px;
-            border-radius: 6px;
-        }
-
-        .complaint-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: start;
-            margin-bottom: 10px;
-        }
-
-        .complaint-title {
-            font-weight: 600;
-            color: #1f2937;
-            font-size: 16px;
-        }
-
-        .complaint-priority {
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 600;
-        }
-
-        .priority-low {
-            background: #dbeafe;
-            color: #1e40af;
-        }
-
-        .priority-medium {
-            background: #fef3c7;
-            color: #92400e;
-        }
-
-        .priority-high {
-            background: #fed7aa;
-            color: #9a3412;
-        }
-
-        .priority-urgent {
-            background: #fee2e2;
-            color: #7f1d1d;
-        }
-
-        .complaint-meta {
-            font-size: 12px;
-            color: #6b7280;
-            margin-bottom: 10px;
-        }
-
-        .complaint-description {
-            color: #374151;
-            line-height: 1.5;
-            margin-bottom: 10px;
-        }
-
-        .complaint-status {
-            display: inline-block;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 600;
-            background: #d1fae5;
-            color: #065f46;
-        }
-
-        .no-complaints {
-            text-align: center;
-            padding: 40px;
-            color: #9ca3af;
-        }
+        .logout-btn:hover { background: #dc2626; }
+        .empty-state { text-align: center; padding: 60px 20px; color: #9ca3af; }
     </style>
 </head>
 <body>
     <div class="dashboard">
-        <header class="admin-header" style="position: relative;">
-            <!-- New container for vertical button alignment -->
-            <div style="position: absolute; top: 30px; right: 30px; display: flex; flex-direction: column; gap: 10px;">
-                <button class="logout-btn" onclick="logout()" style="float: none; margin: 0;">Logout</button>
-                <button id="complaints-btn" class="complaints-icon" onclick="openComplaintsModal()" style="margin: 0; display: flex; align-items: center; justify-content: center; gap: 8px;">
-                    ⚠️ Complaints
-                    <span class="complaint-badge" id="complaint-count" style="display: none;">0</span>
-                </button>
-            </div>
-
-            <h1>Request Status</h1>
-            <p>Track requests sent to staff for approval</p>
+        <header class="admin-header">
+            <button class="logout-btn" onclick="logout()">Logout</button>
+            <h1>Admin Audit Console</h1>
+            <p>Real-Time Tracking of SQL Request Allocation Pipelines</p>
         </header>
 
         <section class="status-section">
-            <div>
-                <button class="back-btn" onclick="goBack()">← Back to Inventory</button>
-                <button class="refresh-btn" onclick="viewRequestStatus()">Refresh Status</button>
-            </div>
-
-            <h2>Sent Requests</h2>
+            <h2>Track Active Allocations</h2>
+            <button onclick="goToInventory()" style="background: #6b7280; color: white; border: none; padding: 10px 18px; border-radius: 6px; cursor: pointer; font-weight: 600; margin-bottom: 15px; margin-right: 10px;">
+                &larr; Back to Inventory
+            </button>
+            <button onclick="fetchAuditLogs()" style="background: #3b82f6; color: white; border: none; padding: 10px 18px; border-radius: 6px; cursor: pointer; font-weight: 600; margin-bottom: 15px;">
+                Refresh Tracking Logs
+            </button>
 
             <div id="status-container">
                 <table class="status-table" id="status-table" style="display: none;">
                     <thead>
                         <tr>
-                            <th>Employee ID</th>
-                            <th>Employee Name</th>
-                            <th>Requested Product</th>
-                            <th>Reason</th>
-                            <th>Date Sent</th>
-                            <th>Status</th>
-                            <th>Notes</th>
+                            <th>ID</th>
+                            <th>Target Employee Name</th>
+                            <th>Allocated Products</th>
+                            <th>Justification Reason</th>
+                            <th>Date Dispatched</th>
+                            <th>Live Status</th>
+                            <th>Staff Feedback / Comments</th>
                         </tr>
                     </thead>
                     <tbody id="status-body">
                     </tbody>
                 </table>
                 <div class="empty-state" id="empty-state">
-                    <p>No requests sent yet.</p>
-                    <p>Requests you send to staff will appear here.</p>
+                    <p>No logged tracking instances found.</p>
                 </div>
             </div>
         </section>
     </div>
 
-    <!-- Complaints Modal -->
-    <div id="complaints-modal">
-        <div class="complaints-modal-content">
-            <div class="complaints-modal-header">
-                <h2>📋 Staff Complaints</h2>
-                <button class="complaints-close-btn" onclick="closeComplaintsModal()">&times;</button>
-            </div>
-            <div class="complaints-modal-body" id="complaints-modal-body">
-                <div class="no-complaints">
-                    <p>No complaints yet.</p>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <script>
-        // Check if admin is logged in
+        // Restrict page view execution parameters to verified admin authorization metrics
         if (localStorage.getItem("loggedIn") !== "true" || localStorage.getItem("role") !== "admin") {
             window.location.href = "login.html";
         }
 
-        // Initialize page
+        const REST_URL = 'http://localhost:5000/api/requests';
+
         document.addEventListener('DOMContentLoaded', () => {
-            viewRequestStatus();
-            
-            // Auto-refresh every 5 seconds
-            setInterval(viewRequestStatus, 5000);
-            
-            // Update complaint count
-            updateComplaintCount();
-            setInterval(updateComplaintCount, 5000);
+            fetchAuditLogs();
         });
 
-        // View request status
-        function viewRequestStatus() {
+        async function fetchAuditLogs() {
             try {
-                const storedRequests = localStorage.getItem('productRequests');
-                const requests = storedRequests ? JSON.parse(storedRequests) : [];
-
-                displayRequestStatus(requests);
+                const response = await fetch(REST_URL);
+                if (!response.ok) throw new Error('API request structural stream crash');
+                const dataset = await response.json();
+                renderStatusTable(dataset);
             } catch (error) {
-                console.error("Error loading requests:", error);
+                console.error("Audit log error:", error);
+                alert("Failed to pull live compilation logs from the SQL database registry.");
             }
         }
 
-        // Display request status in table
-        function displayRequestStatus(requests) {
+        function renderStatusTable(data) {
             const table = document.getElementById('status-table');
             const tbody = document.getElementById('status-body');
             const emptyState = document.getElementById('empty-state');
 
-            if (!requests || requests.length === 0) {
+            if (!data || data.length === 0) {
                 table.style.display = 'none';
                 emptyState.style.display = 'block';
                 return;
@@ -438,133 +179,33 @@
             emptyState.style.display = 'none';
             tbody.innerHTML = '';
 
-            requests.forEach(request => {
+            data.forEach(item => {
                 const row = document.createElement('tr');
                 
-                let statusClass = 'status-pending';
-                let displayStatus = request.status;
-                let notes = '';
-                
-                // Handle both single and multiple products
-                let productDisplay = request.product || (request.products ? request.products.join(', ') : '');
-                
-                if (request.status === 'Approved') {
-                    statusClass = 'status-assigned';
-                    displayStatus = 'Assigned';
-                }
-                if (request.status === 'Rejected') {
-                    statusClass = 'status-rejected';
-                    if (request.rejectionReason) {
-                        notes = `<div class="rejection-note"><strong>Reason:</strong> ${request.rejectionReason}</div>`;
-                    } else {
-                        notes = `<div class="rejection-note">No reason provided</div>`;
-                    }
-                }
+                let badgeClass = 'status-pending';
+                if (item.status === 'Approved') badgeClass = 'status-approved';
+                if (item.status === 'Rejected') badgeClass = 'status-rejected';
+
+                let productsList = Array.isArray(item.products) ? item.products.join(', ') : '';
+                let timestamp = item.date ? new Date(item.date).toLocaleString() : 'Pending';
+                let commentContent = item.rejectionReason ? item.rejectionReason : '<span style="color:#9ca3af;">No comment written</span>';
 
                 row.innerHTML = `
-                    <td>${request.employeeId}</td>
-                    <td>${request.employeeName}</td>
-                    <td>${productDisplay}</td>
-                    <td>${request.reason}</td>
-                    <td>${request.date}</td>
-                    <td><span class="status-badge ${statusClass}">${displayStatus}</span></td>
-                    <td>${notes}</td>
+                    <td><strong>#${item.id}</strong></td>
+                    <td>${item.employeeName}</td>
+                    <td>${productsList}</td>
+                    <td>${item.reason}</td>
+                    <td>${timestamp}</td>
+                    <td><span class="status-badge ${badgeClass}">${item.status}</span></td>
+                    <td class="comment-text">${commentContent}</td>
                 `;
                 tbody.appendChild(row);
             });
         }
 
-        // Go back to inventory
-        function goBack() {
-            window.location.href = "index.html";
-        }
-
-        // Open Complaints Modal
-        function openComplaintsModal() {
-            const complaints = getComplaints();
-            const modal = document.getElementById('complaints-modal');
-            const modalBody = document.getElementById('complaints-modal-body');
-
-            if (!complaints || complaints.length === 0) {
-                modalBody.innerHTML = '<div class="no-complaints"><p>No complaints yet.</p></div>';
-            } else {
-                let complaintsHTML = '';
-                complaints.forEach((complaint, index) => {
-    const priorityClass = `priority-${complaint.priority.toLowerCase()}`;
-    
-    // Only show button if it's not already read
-    const readButton = !complaint.read 
-        ? `<button onclick="markAsRead(${index})" style="margin-top: 10px; cursor: pointer;">Mark as Read</button>` 
-        : '<span style="color: green; font-size: 12px;">✓ Read</span>';
-
-    complaintsHTML += `
-        <div class="complaint-item" style="border: 1px solid #ddd; padding: 10px; margin-bottom: 10px;">
-            <div class="complaint-header">
-                <div>
-                    <div class="complaint-title">${complaint.subject}</div>
-                    <div class="complaint-meta"><strong>${complaint.employeeName}</strong> | ${complaint.date}</div>
-                </div>
-                <span class="complaint-priority ${priorityClass}">${complaint.priority}</span>
-            </div>
-            <div class="complaint-description">${complaint.description}</div>
-            ${readButton}
-        </div>
-    `;
-});
-                modalBody.innerHTML = complaintsHTML;
-            }
-
-            modal.classList.add('show');
-        }
-        function markAsRead(index) {
-    let complaints = getComplaints();
-    
-    // Mark the specific index as read
-    if (complaints[index]) {
-        complaints[index].read = true;
-        localStorage.setItem('complaints', JSON.stringify(complaints));
-    }
-    
-    // Refresh the modal content and the badge
-    openComplaintsModal(); 
-    updateComplaintCount();
-}
-
-        // Close Complaints Modal
-        function closeComplaintsModal() {
-            document.getElementById('complaints-modal').classList.remove('show');
-        }
-
-        // Get Complaints from localStorage
-        function getComplaints() {
-            try {
-                const storedComplaints = localStorage.getItem('complaints');
-                return storedComplaints ? JSON.parse(storedComplaints) : [];
-            } catch (error) {
-                console.error("Error parsing complaints:", error);
-                return [];
-            }
-        }
-
-        // Update this function to filter unread complaints
-function updateComplaintCount() {
-    const complaints = getComplaints();
-    // Count only items where 'read' is NOT true (or doesn't exist yet)
-    const unreadCount = complaints.filter(c => !c.read).length;
-    
-    const countElement = document.getElementById('complaint-count');
-    if (unreadCount > 0) {
-        countElement.textContent = unreadCount;
-        countElement.style.display = 'flex';
-    } else {
-        countElement.style.display = 'none';
-    }
-}
-
-        // Logout
+        function goToInventory() { window.location.href = "index.html"; }
         function logout() {
-            localStorage.removeItem("loggedIn");
-            localStorage.removeItem("role");
+            localStorage.clear();
             window.location.href = "login.html";
         }
     </script>

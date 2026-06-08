@@ -166,7 +166,7 @@
         
     </div>
 
-    <script>
+   <script>
         const userRole =
         localStorage.getItem("role");
         if(localStorage.getItem("loggedIn") !== "true"){
@@ -893,21 +893,24 @@ function addProductRow() {
     
     let productOptions = '<option value="">Select Product</option>';
     currentInventory.forEach(item => {
-        productOptions += `<option value="${item.productName}">${item.productName} (${item.location}) - Stock: ${item.stockLevel}</option>`;
+        productOptions += `<option value="${item.productName}" data-stock="${item.stockLevel}">${item.productName} (${item.location}) - Stock: ${item.stockLevel}</option>`;
     });
-
-    
     const rowHTML = `
-        <div id="${rowId}" style="display: flex; gap: 10px; margin-bottom: 10px; align-items: flex-end;">
-            <select class="product-select" style="flex: 1; min-width: 200px; padding: 8px; border: 1px solid #d1d5db; border-radius: 4px; font-size: 14px;">
-                ${productOptions}
-            </select>
-            <button type="button" onclick="removeProductRow('${rowId}')" style="background: #ef4444; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; font-weight: 600; font-size: 12px;">
+        <div id="${rowId}" class="dynamic-product-row" style="display: flex; gap: 10px; margin-bottom: 10px; align-items: flex-end;">
+            <div style="flex: 2; min-width: 200px;">
+                <select class="product-select" onchange="validateRowStock('${rowId}')" style="width: 100%; padding: 8px; border: 1px solid #d1d5db; border-radius: 4px; font-size: 14px;">
+                    ${productOptions}
+                </select>
+            </div>
+            <div style="flex: 1; min-width: 80px;">
+                <input type="number" class="product-quantity" value="1" min="1" oninput="validateRowStock('${rowId}')" style="width: 100%; padding: 8px; border: 1px solid #d1d5db; border-radius: 4px; font-size: 14px;">
+            </div>
+            <button type="button" onclick="removeProductRow('${rowId}')" style="background: #ef4444; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; font-weight: 600; font-size: 12px; height: 37px;">
                 Remove
             </button>
+            <div class="row-stock-alert" style="color: #ef4444; font-size: 12px; margin-top: 4px; display: block; width: 100%; flex-basis: 100%;"></div>
         </div>
     `;
-    
     
     container.insertAdjacentHTML('beforeend', rowHTML);
 }
@@ -919,9 +922,46 @@ function removeProductRow(rowId) {
         row.remove();
     }
 }
+function validateRowStock(rowId) {
+    const row = document.getElementById(rowId);
+    if (!row) return true;
 
-// Setup request allocation event listeners
-// (Event listeners are now set up in DOMContentLoaded)
+    const selectEl = row.querySelector('.product-select');
+    const qtyEl = row.querySelector('.product-quantity');
+    const alertEl = row.querySelector('.row-stock-alert');
+
+    if (!selectEl || !selectEl.value) {
+        if (alertEl) alertEl.textContent = "";
+        return true;
+    }
+
+    const selectedProductName = selectEl.value;
+    const requestedQty = parseInt(qtyEl.value) || 0;
+
+    // Compares against the live currentInventory array pulled from your database
+    const product = currentInventory.find(item => item.productName === selectedProductName);
+
+    if (!product) {
+        if (alertEl) alertEl.textContent = "";
+        return true;
+    }
+
+    if (requestedQty > product.stockLevel) {
+        if (alertEl) {
+            alertEl.textContent = `❌ Only ${product.stockLevel} units available in stock!`;
+            alertEl.style.color = "#ef4444";
+        }
+        return false;
+    } else {
+        if (alertEl) alertEl.textContent = "";
+        return true;
+    }
+}
+
+
+function goToRequests() {
+    window.location.href = "staff.html";
+}
 
 // Navigate to requests page
 function goToRequests() {
@@ -933,7 +973,7 @@ function goToStatus() {
     window.location.href = "admin-status.html";
 }
 
-// Send request from admin with multiple products
+// Send request to API endpoint with multiple products
 async function sendProductRequest() {
     const empId = document.getElementById('req-emp-select').value;
     const empName = document.getElementById('req-name').value;
@@ -944,57 +984,74 @@ async function sendProductRequest() {
         return;
     }
 
-    // Get all selected products
-    const productSelects = document.querySelectorAll('.product-select');
+    const rowElements = document.querySelectorAll('.dynamic-product-row');
     const products = [];
-    productSelects.forEach(select => {
-        if (select.value) {
-            products.push(select.value);
+    let validationFailed = false;
+
+    rowElements.forEach(row => {
+        const selectEl = row.querySelector('.product-select');
+        const qtyEl = row.querySelector('.product-quantity');
+        const rowId = row.id;
+
+        if (selectEl.value) {
+            // Run final check to verify quantities haven't breached inventory rules
+            if (!validateRowStock(rowId)) {
+                validationFailed = true;
+            }
+
+            products.push({
+                productName: selectEl.value,
+                quantity: parseInt(qtyEl.value) || 1
+            });
         }
     });
+
+    if (validationFailed) {
+        alert('Cannot send request: One or more items exceed available stock quantities.');
+        return;
+    }
 
     if (products.length === 0) {
         alert('Please select at least one product');
         return;
     }
 
-    // Create request for each product (or send as one request with multiple products)
     try {
-        const storedRequests = localStorage.getItem('productRequests');
-        let requests = storedRequests ? JSON.parse(storedRequests) : [];
-
-        // Create a single request with all products
-        const request = {
-            id: Date.now().toString(),
-            employeeId: empId,
+        const requestPayload = {
             employeeName: empName,
-            products: products,
             reason: reason,
-            status: 'Pending',
-            date: new Date().toLocaleString()
+            products: products // Now passing an array of objects: [{productName: '...', quantity: 2}]
         };
 
-        requests.push(request);
-        localStorage.setItem('productRequests', JSON.stringify(requests));
+        const response = await fetch('http://localhost:5000/api/requests', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(requestPayload)
+        });
 
-        const productList = products.join(', ');
-        alert(`Request sent successfully!\n\nEmployee: ${empName}\nProducts: ${productList}\n\nStaff will review this request.`);
+        if (!response.ok) {
+            throw new Error('Server returned error status');
+        }
 
-        // Clear form
+        const data = await response.json();
+        const productList = products.map(p => `${p.productName} (Qty: ${p.quantity})`).join(', ');
+        alert(`Request sent successfully via Database!\n\nEmployee: ${empName}\nAllocations: ${productList}\n\nStaff will review this request.`);
+
+        // Clear form fields cleanly
         document.getElementById('req-emp-select').value = '';
         document.getElementById('req-name').value = '';
         document.getElementById('products-container').innerHTML = '';
         document.getElementById('req-reason').value = '';
 
-        // Reset buttons
         document.getElementById('load-emp-btn').style.display = 'inline-block';
         document.getElementById('req-emp-select').style.display = 'none';
 
     } catch (error) {
-        console.error("Error sending request:", error);
-        alert("Failed to send request");
+        console.error("Error saving request to database:", error);
+        alert("Failed to send request to the database server.");
     }
-}
-    </script>
+} </script>
 </body>
 </html>
